@@ -3,7 +3,14 @@ import pandas as pd
 from datetime import date, timedelta, datetime
 import logging
 import os # Import os to check for file existence
+from weasyprint import HTML
+# Ensure the utils directory is in the Python path
+import sys
 
+HTML(string=html_string).write_pdf("output.pdf")
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+# Import necessary utility functions
+# These imports are only needed for the CSV loading path
 # Configure logging for the main app
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
