@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import date, timedelta, datetime
 import logging
 import os # Import os to check for file existence
+from fpdf import FPDF # For PDF export functionality
 # Ensure the utils directory is in the Python path
 import sys
 import io
@@ -441,8 +442,6 @@ else:
             mime="text/csv",
             key="download_csv_button"
         )
-
-    from fpdf import FPDF
 
     with col_pdf:
         try:
