@@ -6,6 +6,8 @@ import os # Import os to check for file existence
 from weasyprint import HTML
 # Ensure the utils directory is in the Python path
 import sys
+from xhtml2pdf import pisa
+import io
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 # Configure logging for the main app
@@ -444,22 +446,20 @@ else:
 
     with col_pdf:
         try:
+            from xhtml2pdf import pisa
+            import io
+
             if not df_export.empty:
                 html_string = f"""
                     <html>
                     <head>
                         <style>
-                            body {{
-                                font-family: 'Arial', sans-serif;
-                                font-size: 12px;
-                                padding: 20px;
-                            }}
                             table {{
                                 width: 100%;
                                 border-collapse: collapse;
                             }}
                             th, td {{
-                                border: 1px solid #dddddd;
+                                border: 1px solid #ccc;
                                 padding: 8px;
                                 text-align: left;
                             }}
@@ -470,27 +470,29 @@ else:
                     </head>
                     <body>
                         <h2>Sentiment Analysis Report</h2>
-                        {df_export.to_html(index=False, escape=False)}
+                        {df_export.to_html(index=False)}
                     </body>
                     </html>
                 """
 
-                # Generate PDF using WeasyPrint
-                pdf_bytes = HTML(string=html_string).write_pdf()
+                pdf_buffer = io.BytesIO()
+                pisa_status = pisa.CreatePDF(io.StringIO(html_string), dest=pdf_buffer)
 
-                st.download_button(
-                    label="Download Data as PDF 📄",
-                    data=pdf_bytes,
-                    file_name="sentiment_analysis_data.pdf",
-                    mime="application/pdf",
-                    key="download_pdf_button"
-                )
+                if not pisa_status.err:
+                    st.download_button(
+                        label="Download Data as PDF 📄",
+                        data=pdf_buffer.getvalue(),
+                        file_name="sentiment_analysis_data.pdf",
+                        mime="application/pdf",
+                        key="download_pdf_button"
+                    )
+                else:
+                    st.error("PDF generation failed. Please check the HTML content or styles.")
             else:
                 st.info("No data to export to PDF.")
         except Exception as e:
-            st.error(f"PDF export failed. Error: {e}")
-            st.warning("PDF export requires WeasyPrint. Ensure it is installed in your environment.")
-
+            st.error(f"PDF export failed: {e}")
+            st.warning("PDF export requires the xhtml2pdf library. Please install it to enable this feature.")
 
     # --- Show Raw Data Table (Toggle) ---
     st.markdown("---")
