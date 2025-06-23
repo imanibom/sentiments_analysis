@@ -5,7 +5,6 @@ import logging
 import os # Import os to check for file existence
 # Ensure the utils directory is in the Python path
 import sys
-from xhtml2pdf import pisa
 import io
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
@@ -444,54 +443,56 @@ else:
         )
 
     with col_pdf:
-        try:
-            from xhtml2pdf import pisa
-            import io
+        from fpdf import FPDF
 
-            if not df_export.empty:
-                html_string = f"""
-                    <html>
-                    <head>
-                        <style>
-                            table {{
-                                width: 100%;
-                                border-collapse: collapse;
-                            }}
-                            th, td {{
-                                border: 1px solid #ccc;
-                                padding: 8px;
-                                text-align: left;
-                            }}
-                            th {{
-                                background-color: #f2f2f2;
-                            }}
-                        </style>
-                    </head>
-                    <body>
-                        <h2>Sentiment Analysis Report</h2>
-                        {df_export.to_html(index=False)}
-                    </body>
-                    </html>
-                """
+        def generate_pdf_from_dataframe(df, title="Sentiment Analysis Report"):
+            pdf = FPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
 
-                pdf_buffer = io.BytesIO()
-                pisa_status = pisa.CreatePDF(io.StringIO(html_string), dest=pdf_buffer)
+            # Title
+            pdf.set_font("Arial", 'B', 14)
+            pdf.cell(200, 10, txt=title, ln=True, align='C')
+            pdf.ln(10)
 
-                if not pisa_status.err:
-                    st.download_button(
-                        label="Download Data as PDF 📄",
-                        data=pdf_buffer.getvalue(),
-                        file_name="sentiment_analysis_data.pdf",
-                        mime="application/pdf",
-                        key="download_pdf_button"
-                    )
-                else:
-                    st.error("PDF generation failed. Please check the HTML content or styles.")
-            else:
-                st.info("No data to export to PDF.")
-        except Exception as e:
-            st.error(f"PDF export failed: {e}")
-            st.warning("PDF export requires the xhtml2pdf library. Please install it to enable this feature.")
+            # Column headers
+            col_widths = [30, 25, 25, 20, 90]
+            headers = ["Date", "Source", "Sentiment", "Score", "Text"]
+            for i, header in enumerate(headers):
+                pdf.cell(col_widths[i], 10, header, border=1)
+            pdf.ln()
+
+            # Rows
+            for _, row in df.iterrows():
+                row_values = [
+                    str(row.get("date", "")),
+                    str(row.get("source", "")),
+                    str(row.get("sentiment", "")),
+                    f"{row.get('score', 0):.2f}",
+                    str(row.get("text", ""))[:60] + "..." if len(str(row.get("text", ""))) > 63 else str(row.get("text", ""))
+                ]
+                for i, val in enumerate(row_values):
+                    pdf.cell(col_widths[i], 10, val, border=1)
+                pdf.ln()
+
+            return pdf.output(dest='S').encode('latin1')
+
+        if not df_export.empty:
+            try:
+                pdf_bytes = generate_pdf_from_dataframe(df_export)
+                st.download_button(
+                    label="Download Data as PDF 📄",
+                    data=pdf_bytes,
+                    file_name="sentiment_analysis_data.pdf",
+                    mime="application/pdf",
+                    key="download_pdf_button"
+                )
+            except Exception as e:
+                st.error(f"PDF generation failed: {e}")
+        else:
+            st.info("No data to export to PDF.")
+    st.markdown("---")
 
     # --- Show Raw Data Table (Toggle) ---
     st.markdown("---")
