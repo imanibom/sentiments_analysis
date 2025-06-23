@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import date, timedelta, datetime
 import logging
 import os # Import os to check for file existence
-from weasyprint import HTML
 # Ensure the utils directory is in the Python path
 import sys
 from xhtml2pdf import pisa
