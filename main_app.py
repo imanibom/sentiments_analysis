@@ -442,56 +442,52 @@ else:
             key="download_csv_button"
         )
 
-    with col_pdf:
-        from fpdf import FPDF
+    from fpdf import FPDF
 
-        def generate_pdf_from_dataframe(df, title="Sentiment Analysis Report"):
+with col_pdf:
+    try:
+        if not df_export.empty:
             pdf = FPDF()
-            pdf.set_auto_page_break(auto=True, margin=15)
             pdf.add_page()
             pdf.set_font("Arial", size=12)
 
             # Title
-            pdf.set_font("Arial", 'B', 14)
-            pdf.cell(200, 10, txt=title, ln=True, align='C')
+            pdf.set_font("Arial", style="B", size=14)
+            pdf.cell(200, 10, txt="Sentiment Analysis Report", ln=True, align="C")
             pdf.ln(10)
 
-            # Column headers
-            col_widths = [30, 25, 25, 20, 90]
-            headers = ["Date", "Source", "Sentiment", "Score", "Text"]
-            for i, header in enumerate(headers):
-                pdf.cell(col_widths[i], 10, header, border=1)
+            # Add table header
+            pdf.set_font("Arial", style="B", size=10)
+            headers = list(df_export.columns)
+            for header in headers:
+                pdf.cell(40, 10, txt=header[:15], border=1)
             pdf.ln()
 
-            # Rows
-            for _, row in df.iterrows():
-                row_values = [
-                    str(row.get("date", "")),
-                    str(row.get("source", "")),
-                    str(row.get("sentiment", "")),
-                    f"{row.get('score', 0):.2f}",
-                    str(row.get("text", ""))[:60] + "..." if len(str(row.get("text", ""))) > 63 else str(row.get("text", ""))
-                ]
-                for i, val in enumerate(row_values):
-                    pdf.cell(col_widths[i], 10, val, border=1)
+            # Add rows
+            pdf.set_font("Arial", size=9)
+            for _, row in df_export.iterrows():
+                for item in row:
+                    item_str = str(item)
+                    pdf.cell(40, 10, txt=item_str[:15], border=1)
                 pdf.ln()
 
-            return pdf.output(dest='S').encode('latin1')
+            # Export
+            pdf_buffer = io.BytesIO()
+            pdf.output(pdf_buffer)
+            pdf_buffer.seek(0)
 
-        if not df_export.empty:
-            try:
-                pdf_bytes = generate_pdf_from_dataframe(df_export)
-                st.download_button(
-                    label="Download Data as PDF 📄",
-                    data=pdf_bytes,
-                    file_name="sentiment_analysis_data.pdf",
-                    mime="application/pdf",
-                    key="download_pdf_button"
-                )
-            except Exception as e:
-                st.error(f"PDF generation failed: {e}")
+            st.download_button(
+                label="Download Data as PDF 📄",
+                data=pdf_buffer,
+                file_name="sentiment_analysis_data.pdf",
+                mime="application/pdf",
+                key="download_pdf_button"
+            )
         else:
             st.info("No data to export to PDF.")
+    except Exception as e:
+        st.error(f"PDF export failed: {e}")
+
     st.markdown("---")
 
     # --- Show Raw Data Table (Toggle) ---
