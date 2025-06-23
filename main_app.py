@@ -443,53 +443,53 @@ else:
         )
 
     with col_pdf:
-    try:
-        if not df_export.empty:
-            html_string = f"""
-                <html>
-                <head>
-                    <style>
-                        body {{
-                            font-family: 'Arial', sans-serif;
-                            font-size: 12px;
-                            padding: 20px;
-                        }}
-                        table {{
-                            width: 100%;
-                            border-collapse: collapse;
-                        }}
-                        th, td {{
-                            border: 1px solid #dddddd;
-                            padding: 8px;
-                            text-align: left;
-                        }}
-                        th {{
-                            background-color: #f2f2f2;
-                        }}
-                    </style>
-                </head>
-                <body>
-                    <h2>Sentiment Analysis Report</h2>
-                    {df_export.to_html(index=False, escape=False)}
-                </body>
-                </html>
-            """
+        try:
+            if not df_export.empty:
+                html_string = f"""
+                    <html>
+                    <head>
+                        <style>
+                            body {{
+                                font-family: 'Arial', sans-serif;
+                                font-size: 12px;
+                                padding: 20px;
+                            }}
+                            table {{
+                                width: 100%;
+                                border-collapse: collapse;
+                            }}
+                            th, td {{
+                                border: 1px solid #dddddd;
+                                padding: 8px;
+                                text-align: left;
+                            }}
+                            th {{
+                                background-color: #f2f2f2;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <h2>Sentiment Analysis Report</h2>
+                        {df_export.to_html(index=False, escape=False)}
+                    </body>
+                    </html>
+                """
 
-            # Generate PDF using WeasyPrint
-            pdf_bytes = HTML(string=html_string).write_pdf()
+                # Generate PDF using WeasyPrint
+                pdf_bytes = HTML(string=html_string).write_pdf()
 
-            st.download_button(
-                label="Download Data as PDF 📄",
-                data=pdf_bytes,
-                file_name="sentiment_analysis_data.pdf",
-                mime="application/pdf",
-                key="download_pdf_button"
-            )
-        else:
-            st.info("No data to export to PDF.")
-    except Exception as e:
-        st.error(f"PDF export failed. Error: {e}")
-        st.warning("PDF export requires WeasyPrint. Ensure it is installed in your environment.")
+                st.download_button(
+                    label="Download Data as PDF 📄",
+                    data=pdf_bytes,
+                    file_name="sentiment_analysis_data.pdf",
+                    mime="application/pdf",
+                    key="download_pdf_button"
+                )
+            else:
+                st.info("No data to export to PDF.")
+        except Exception as e:
+            st.error(f"PDF export failed. Error: {e}")
+            st.warning("PDF export requires WeasyPrint. Ensure it is installed in your environment.")
 
 
     # --- Show Raw Data Table (Toggle) ---
