@@ -443,37 +443,53 @@ else:
         )
 
     with col_pdf:
-        try:
-            import pdfkit
-            if not df_export.empty:
-                html = df_export.to_html(index=False)
-                pdf = pdfkit.from_string(html, False, options={
-                    "enable-local-file-access": "",
-                    "encoding": "UTF-8",
-                    "no-stop-slow-scripts": True,
-                    "page-size": "A4",
-                    "orientation": "Landscape",
-                    "margin-top": "1in",
-                    "margin-right": "0.75in",
-                    "margin-bottom": "1in",
-                    "margin-left": "0.75in",
-                    "enable-javascript": True,
-                    "javascript-delay": 2000
-                })
-                
-                st.download_button(
-                    label="Download Data as PDF 📄",
-                    data=pdf,
-                    file_name="sentiment_analysis_data.pdf",
-                    mime="application/pdf",
-                    key="download_pdf_button"
-                )
-            else:
-                st.info("No data to export to PDF.")
-        except ImportError:
-            st.info("To enable PDF export, please install `pdfkit` (`pip install pdfkit`) and `wkhtmltopdf` on your system.")
-        except Exception as e:
-            st.error(f"PDF export not available due to an error. Ensure `wkhtmltopdf` is installed and its path is configured if necessary. Error: {e}")
+    try:
+        if not df_export.empty:
+            html_string = f"""
+                <html>
+                <head>
+                    <style>
+                        body {{
+                            font-family: 'Arial', sans-serif;
+                            font-size: 12px;
+                            padding: 20px;
+                        }}
+                        table {{
+                            width: 100%;
+                            border-collapse: collapse;
+                        }}
+                        th, td {{
+                            border: 1px solid #dddddd;
+                            padding: 8px;
+                            text-align: left;
+                        }}
+                        th {{
+                            background-color: #f2f2f2;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <h2>Sentiment Analysis Report</h2>
+                    {df_export.to_html(index=False, escape=False)}
+                </body>
+                </html>
+            """
+
+            # Generate PDF using WeasyPrint
+            pdf_bytes = HTML(string=html_string).write_pdf()
+
+            st.download_button(
+                label="Download Data as PDF 📄",
+                data=pdf_bytes,
+                file_name="sentiment_analysis_data.pdf",
+                mime="application/pdf",
+                key="download_pdf_button"
+            )
+        else:
+            st.info("No data to export to PDF.")
+    except Exception as e:
+        st.error(f"PDF export failed. Error: {e}")
+        st.warning("PDF export requires WeasyPrint. Ensure it is installed in your environment.")
 
 
     # --- Show Raw Data Table (Toggle) ---
